@@ -16,7 +16,7 @@ class Movie(Base):
     '''Model to represent a movie with data from a
     row in the CSV from IMDB.
     '''
-    __tablename__ = 'movies'
+    __tablename__ = 'movie'
 
     id = Column(Integer, primary_key=True)
     movie_title = Column('title', String, unique=True)
@@ -37,8 +37,9 @@ class Movie(Base):
         raw_movie_list - list
         '''
         header = raw_movie_list.pop(0)
-        
+
         movie_title_index = header.index('movie_title')
+        genres_index = header.index('genres')
         actor_name1_index = header.index('actor_1_name')
         actor_name2_index = header.index('actor_2_name')
         actor_name3_index = header.index('actor_3_name')
@@ -55,6 +56,7 @@ class Movie(Base):
             movie.actor_name2 = each[actor_name2_index]
             movie.actor_name3 = each[actor_name3_index]
             movie.director_name = each[director_name_index]
+
             try:
                 movie.budget = int(each[budget_index])
             except ValueError:
@@ -77,5 +79,39 @@ class Movie(Base):
 
     def __str__(self):
         return self.movie_title
+
+
+class Genre(Base):
+    __tablename__ = 'genre'
+
+    id = Column(Integer, primary_key=True)
+    name = Column('name', String, unique=True)
+
+    @classmethod
+    def genre_factory(cls, genres):
+        '''Factory method to create Genre instances.
+
+        Args:
+        genres - '|' delimited string
+        '''
+        genres = list()
+        session = Session()
+        
+        for each in str(genres).split('|'):
+            genre = Genre(name=each)
+            try:
+                session.add(genre)
+                genres.append(genre)
+            except IntegrityError:
+                session.rollback()
+        return genres
+
+    def __repr__(self):
+        return "<Genre(name='%s')>" % self.name
+
+    def __str__(self):
+        return self.name
+                
+    
 
 Base.metadata.create_all(engine)
